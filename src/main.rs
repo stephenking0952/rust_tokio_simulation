@@ -1,34 +1,52 @@
 use std::error::Error;
-use std::thread;
-use std::time::{self, Instant};
+use tokio::{main, sync::mpsc};
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 4)]
-async fn main() -> Result<(), Box<dyn Error>> {
-    let now = Instant::now();
-    let mut buffer = Vec::new();
-
-    for i in 0..20 {
-        let handle = tokio::spawn({async move {
-            hello(i).await
-        }});
-        buffer.push(handle);
-    }
-
-    for i in buffer {
-        i.await;
-    }
-
-    let elapsed = now.elapsed();
-
-    println!("Elapsed: {:.2?}", elapsed);
-
-    Ok(())
+#[derive(Debug, Clone)]
+pub enum Order {
+    BUY,
+    SELL,
 }
 
-async fn hello(input_int: i32) -> i32 {
-    let five_seconds = time::Duration::from_secs(5);
-    tokio::time::sleep(five_seconds).await;
+#[derive(Debug, Clone)]
+pub struct Message {
+    pub order: Order,
+    pub ticker: String,
+    pub amount: f32,
+}
 
-    println!("Hello, world! {}", input_int);
-    input_int
+#[main(flavor = "multi_thread", worker_threads = 4)]
+async fn main() -> Result<(), Box<dyn Error>> {
+    let (tx, mut rx) = mpsc::channel(1);
+    let orders = vec![
+        Message {
+            order: Order::BUY,
+            ticker: String::from("BYND"),
+            amount: 5.5,
+        },
+        Message {
+            order: Order::BUY,
+            ticker: String::from("NET"),
+            amount: 5.5,
+        },
+        Message {
+            order: Order::BUY,
+            ticker: String::from("PLTR"),
+            amount: 5.5,
+        },
+    ];
+
+    tokio::spawn(async move {
+        for order in orders {
+            if let Err(e) = tx.send(order.clone()).await {
+                println!("send error: {:?}", e);
+            }
+            println!("sent: {:?}", order);
+        }
+    });
+
+    while let Some(i) = rx.recv().await {
+        println!("GOT = {:?}", i);
+    }
+
+    Ok(())
 }
