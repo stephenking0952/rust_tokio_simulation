@@ -93,8 +93,9 @@ impl BuyOrder {
 
 #[main(flavor = "multi_thread", worker_threads = 4)]
 async fn main() -> Result<(), Box<dyn Error>> {
-    let (tx, mut rx) = mpsc::channel::<Message>(1);
+    let (tx, rx) = mpsc::channel::<Message>(1);
     let tx1 = tx.clone();
+    let tx2 = tx.clone();
 
     tokio::spawn(async move {
         for _ in 0..5 {
@@ -102,6 +103,14 @@ async fn main() -> Result<(), Box<dyn Error>> {
             buy_actor.send().await;
         }
         drop(tx1);
+    });
+
+    tokio::spawn(async move {
+        for _ in 0..5 {
+            let buy_actor = BuyOrder::new(5.5, String::from("BYND"), tx2.clone());
+            buy_actor.send().await;
+        }
+        drop(tx2);
     });
 
     tokio::spawn(async move {
