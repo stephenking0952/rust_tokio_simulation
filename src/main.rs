@@ -96,6 +96,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let (tx, rx) = mpsc::channel::<Message>(1);
     let tx1 = tx.clone();
     let tx2 = tx.clone();
+    let tx3 = tx.clone();
 
     tokio::spawn(async move {
         for _ in 0..5 {
@@ -107,10 +108,18 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     tokio::spawn(async move {
         for _ in 0..5 {
-            let buy_actor = BuyOrder::new(5.5, String::from("BYND"), tx2.clone());
+            let buy_actor = BuyOrder::new(5.5, String::from("YYDS"), tx2.clone());
             buy_actor.send().await;
         }
         drop(tx2);
+    });
+
+    tokio::spawn(async move {
+        for _ in 0..5 {
+            let buy_actor = BuyOrder::new(5.5, String::from("OJBK"), tx3.clone());
+            buy_actor.send().await;
+        }
+        drop(tx3);
     });
 
     tokio::spawn(async move {
