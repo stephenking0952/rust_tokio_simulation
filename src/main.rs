@@ -97,6 +97,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let tx1 = tx.clone();
     let tx2 = tx.clone();
     let tx3 = tx.clone();
+    let tx4 = tx.clone();
+    let tx5 = tx.clone();
 
     tokio::spawn(async move {
         for _ in 0..5 {
@@ -120,6 +122,22 @@ async fn main() -> Result<(), Box<dyn Error>> {
             buy_actor.send().await;
         }
         drop(tx3);
+    });
+
+    tokio::spawn(async move {
+        for _ in 0..5 {
+            let buy_actor = BuyOrder::new(5.5, String::from("OJBK"), tx4.clone());
+            buy_actor.send().await;
+        }
+        drop(tx4);
+    });
+
+    tokio::spawn(async move {
+        for _ in 0..5 {
+            let buy_actor = BuyOrder::new(5.5, String::from("OJBK"), tx5.clone());
+            buy_actor.send().await;
+        }
+        drop(tx5);
     });
 
     tokio::spawn(async move {
